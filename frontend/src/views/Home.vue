@@ -246,6 +246,7 @@ const handleSubmit = async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
@@ -256,10 +257,9 @@ const handleSubmit = async () => {
 }
 
 .notebook-footer {
-  border-top: 1px solid #EBEEF5;
-  padding: 12px 20px;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  padding: 10px 20px;
+  border-top: 1px solid #ebeef5;
 }
 </style> 
