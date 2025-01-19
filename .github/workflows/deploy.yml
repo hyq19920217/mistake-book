@@ -55,6 +55,10 @@ jobs:
             cp -r temp/backend/* backend/
             cp -r temp/frontend/dist/* frontend/dist/
             
+            # 部署 Nginx 配置
+            sudo cp temp/nginx/mistake-book.conf /etc/nginx/conf.d/
+            sudo nginx -t && sudo systemctl reload nginx
+            
             # 清理临时文件
             rm -rf temp
             
