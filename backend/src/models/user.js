@@ -9,54 +9,54 @@
  * 2024-03-xx：创建文件，定义基础用户模型
  */
 
-const mongoose = require('mongoose')
-const bcrypt = require('bcryptjs')
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
   username: {
-    type: String,
-    required: [true, '用户名不能为空'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    trim: true,
-    minlength: [3, '用户名至少3个字符'],
-    maxlength: [20, '用户名最多20个字符']
+    validate: {
+      len: [3, 20]
+    }
   },
   email: {
-    type: String,
-    required: [true, '邮箱不能为空'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, '请输入有效的邮箱地址']
+    validate: {
+      isEmail: true
+    }
   },
   password: {
-    type: String,
-    required: [true, '密码不能为空'],
-    minlength: [6, '密码至少6个字符'],
-    select: false // 查询时默认不返回密码
+    type: DataTypes.STRING,
+    allowNull: false
   },
   createdAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
-})
-
-// 保存前加密密码
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next()
-  
-  try {
-    const salt = await bcrypt.genSalt(10)
-    this.password = await bcrypt.hash(this.password, salt)
-    next()
-  } catch (error) {
-    next(error)
+}, {
+  hooks: {
+    beforeCreate: async (user) => {
+      if (user.password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+    },
+    beforeUpdate: async (user) => {
+      if (user.changed('password')) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+    }
   }
-})
+});
 
-// 验证密码
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password)
-}
+User.prototype.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
-module.exports = mongoose.model('User', userSchema) 
+module.exports = User; 

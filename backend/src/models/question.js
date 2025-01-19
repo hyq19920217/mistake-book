@@ -9,60 +9,44 @@
  * 2024-03-xx：创建文件，定义错题模型
  */
 
-const mongoose = require('mongoose')
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const questionSchema = new mongoose.Schema({
+const Question = sequelize.define('Question', {
+  content: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  analysis: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  images: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: []
+  },
+  knowledgePoints: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: []
+  },
   notebookId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Notebook',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'notebooks',
+      key: 'id'
+    }
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  content: {
-    type: String,
-    required: [true, '题目内容不能为空'],
-    trim: true
-  },
-  images: [{
-    url: String,
-    description: String
-  }],
-  analysis: {
-    type: String,
-    trim: true
-  },
-  knowledgePoints: [{
-    level1: String,
-    level2: String,
-    level3: String
-  }],
-  ocrText: {
-    type: String,
-    trim: true
-  },
-  status: {
-    type: String,
-    enum: ['draft', 'completed'],
-    default: 'draft'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   }
-})
+});
 
-// 更新时自动更新updatedAt字段
-questionSchema.pre('save', function(next) {
-  this.updatedAt = Date.now()
-  next()
-})
-
-module.exports = mongoose.model('Question', questionSchema) 
+module.exports = Question; 

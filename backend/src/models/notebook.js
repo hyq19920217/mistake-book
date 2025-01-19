@@ -8,39 +8,29 @@
  * 2024-03-xx：创建文件，定义错题本模型
  */
 
-const mongoose = require('mongoose')
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const notebookSchema = new mongoose.Schema({
+const Notebook = sequelize.define('Notebook', {
   name: {
-    type: String,
-    required: [true, '错题本名称不能为空'],
-    trim: true,
-    maxlength: [50, '错题本名称不能超过50个字符']
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      len: [1, 50]
+    }
   },
   description: {
-    type: String,
-    trim: true,
-    maxlength: [200, '描述不能超过200个字符']
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   }
-})
+});
 
-// 更新时自动更新updatedAt字段
-notebookSchema.pre('save', function(next) {
-  this.updatedAt = Date.now()
-  next()
-})
-
-module.exports = mongoose.model('Notebook', notebookSchema) 
+module.exports = Notebook; 

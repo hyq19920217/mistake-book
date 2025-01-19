@@ -10,56 +10,70 @@
  */
 
 import { defineStore } from 'pinia'
-import request from '../utils/request'
+import { ref } from 'vue'
+import { request } from '../utils/request'
 
-export const useUserStore = defineStore('user', {
-  state: () => ({
-    token: localStorage.getItem('token') || '',
-    userInfo: JSON.parse(localStorage.getItem('userInfo') || '{}')
-  }),
+export const useUserStore = defineStore('user', () => {
+  const token = ref(localStorage.getItem('token') || '')
+  const user = ref(null)
+  const isLoggedIn = ref(!!token.value)
 
-  actions: {
-    async login(email, password) {
-      try {
-        const res = await request.post('/auth/login', { email, password })
-        this.setUserData(res.data)
-        return res
-      } catch (error) {
-        throw error
-      }
-    },
+  const setToken = (newToken) => {
+    token.value = newToken
+    localStorage.setItem('token', newToken)
+    isLoggedIn.value = true
+  }
 
-    async register(username, email, password) {
-      try {
-        const res = await request.post('/auth/register', {
-          username,
-          email,
-          password
-        })
-        this.setUserData(res.data)
-        return res
-      } catch (error) {
-        throw error
-      }
-    },
+  const setUser = (userData) => {
+    user.value = userData
+  }
 
-    setUserData(data) {
-      this.token = data.token
-      this.userInfo = data.user
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('userInfo', JSON.stringify(data.user))
-    },
-
-    logout() {
-      this.token = ''
-      this.userInfo = {}
-      localStorage.removeItem('token')
-      localStorage.removeItem('userInfo')
+  const login = async (credentials) => {
+    try {
+      const { data } = await request.post('/auth/login', credentials)
+      setToken(data.token)
+      setUser(data.user)
+    } catch (error) {
+      throw new Error(error.response?.data?.message || '登录失败')
     }
-  },
+  }
 
-  getters: {
-    isAuthenticated: (state) => !!state.token,
-    username: (state) => state.userInfo.username
+  const register = async (userData) => {
+    try {
+      const { data } = await request.post('/auth/register', userData)
+      setToken(data.token)
+      setUser(data.user)
+    } catch (error) {
+      throw new Error(error.response?.data?.message || '注册失败')
+    }
+  }
+
+  const logout = () => {
+    token.value = ''
+    user.value = null
+    isLoggedIn.value = false
+    localStorage.removeItem('token')
+  }
+
+  const fetchUserInfo = async () => {
+    if (!token.value) return
+    
+    try {
+      const { data } = await request.get('/auth/me')
+      setUser(data)
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+      logout()
+    }
+  }
+
+  return {
+    token,
+    user,
+    isLoggedIn,
+    login,
+    register,
+    logout,
+    fetchUserInfo
   }
 }) 

@@ -12,47 +12,25 @@
 <template>
   <div class="login-container">
     <el-card class="login-card">
-      <template #header>
-        <div class="card-header">
-          <span>{{ isLogin ? '登录' : '注册' }}</span>
-          <el-button text @click="toggleMode">
-            {{ isLogin ? '没有账号？去注册' : '已有账号？去登录' }}
-          </el-button>
-        </div>
-      </template>
-
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-position="top"
-        @submit.prevent
-      >
-        <template v-if="!isLogin">
-          <el-form-item label="用户名" prop="username">
-            <el-input v-model="form.username" placeholder="请输入用户名" />
-          </el-form-item>
-        </template>
-
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" placeholder="请输入邮箱" />
+      <h2>错题本管理系统</h2>
+      <el-form :model="form" :rules="rules" ref="formRef">
+        <el-form-item prop="username">
+          <el-input v-model="form.username" placeholder="用户名" />
         </el-form-item>
-
-        <el-form-item label="密码" prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="请输入密码"
-            show-password
-          />
+        <el-form-item prop="password">
+          <el-input v-model="form.password" type="password" placeholder="密码" />
         </el-form-item>
-
         <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSubmit" block>
+          <el-button type="primary" @click="handleSubmit" :loading="loading" block>
             {{ isLogin ? '登录' : '注册' }}
           </el-button>
         </el-form-item>
       </el-form>
+      <div class="switch-mode">
+        <el-link @click="isLogin = !isLogin">
+          {{ isLogin ? '没有账号？立即注册' : '已有账号？立即登录' }}
+        </el-link>
+      </div>
     </el-card>
   </div>
 </template>
@@ -71,7 +49,6 @@ const isLogin = ref(true)
 
 const form = reactive({
   username: '',
-  email: '',
   password: ''
 })
 
@@ -80,22 +57,10 @@ const rules = {
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
   ],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-  ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能小于6位', trigger: 'blur' }
+    { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
   ]
-}
-
-const toggleMode = () => {
-  isLogin.value = !isLogin.value
-  form.username = ''
-  form.email = ''
-  form.password = ''
-  formRef.value?.resetFields()
 }
 
 const handleSubmit = async () => {
@@ -106,15 +71,15 @@ const handleSubmit = async () => {
     loading.value = true
     
     if (isLogin.value) {
-      await userStore.login(form.email, form.password)
+      await userStore.login(form)
     } else {
-      await userStore.register(form.username, form.email, form.password)
+      await userStore.register(form)
     }
     
     ElMessage.success(isLogin.value ? '登录成功' : '注册成功')
     router.push('/')
   } catch (error) {
-    console.error(error)
+    ElMessage.error(error.message || '操作失败')
   } finally {
     loading.value = false
   }
@@ -123,21 +88,26 @@ const handleSubmit = async () => {
 
 <style scoped>
 .login-container {
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
   background-color: #f5f7fa;
 }
 
 .login-card {
-  width: 100%;
-  max-width: 400px;
+  width: 400px;
+  padding: 20px;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.login-card h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #409eff;
+}
+
+.switch-mode {
+  text-align: center;
+  margin-top: 20px;
 }
 </style> 

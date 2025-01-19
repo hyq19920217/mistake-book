@@ -10,31 +10,32 @@
  */
 
 import { createRouter, createWebHistory } from 'vue-router'
-import Layout from '../components/Layout.vue'
+import { useUserStore } from '../stores/user'
 
 const routes = [
   {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/Login.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/',
-    component: Layout,
+    name: 'Layout',
+    component: () => import('../components/Layout.vue'),
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
         name: 'Home',
-        component: () => import('../views/Home.vue'),
-        meta: { requiresAuth: true }
+        component: () => import('../views/Home.vue')
       },
       {
-        path: 'notebook',
+        path: 'notebook/:id',
         name: 'Notebook',
-        component: () => import('../views/Notebook.vue'),
-        meta: { requiresAuth: true }
+        component: () => import('../views/Notebook.vue')
       }
     ]
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('../views/Login.vue')
   }
 ]
 
@@ -43,14 +44,13 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
+// 导航守卫
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('token')
-  
-  if (to.meta.requiresAuth && !isAuthenticated) {
+  const userStore = useUserStore()
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+
+  if (requiresAuth && !userStore.isLoggedIn) {
     next('/login')
-  } else if (to.path === '/login' && isAuthenticated) {
-    next('/')
   } else {
     next()
   }

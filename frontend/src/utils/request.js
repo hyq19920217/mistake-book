@@ -12,9 +12,9 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-const request = axios.create({
-  baseURL: 'http://localhost:3000/api',
-  timeout: 5000
+export const request = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  timeout: 10000
 })
 
 // 请求拦截器
@@ -27,6 +27,7 @@ request.interceptors.request.use(
     return config
   },
   error => {
+    console.error('请求错误:', error)
     return Promise.reject(error)
   }
 )
@@ -34,12 +35,35 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   response => {
-    return response.data
+    return response
   },
   error => {
-    ElMessage.error(error.response?.data?.message || '请求失败')
+    console.error('响应错误:', error)
+    
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          ElMessage.error('未授权，请重新登录')
+          // 可以在这里处理登出逻辑
+          break
+        case 403:
+          ElMessage.error('拒绝访问')
+          break
+        case 404:
+          ElMessage.error('请求的资源不存在')
+          break
+        case 500:
+          ElMessage.error('服务器错误')
+          break
+        default:
+          ElMessage.error(error.response.data?.message || '未知错误')
+      }
+    } else if (error.request) {
+      ElMessage.error('网络错误，请检查您的网络连接')
+    } else {
+      ElMessage.error('请求配置错误')
+    }
+    
     return Promise.reject(error)
   }
-)
-
-export default request 
+) 
