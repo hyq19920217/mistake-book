@@ -1,0 +1,66 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install Dependencies
+        run: |
+          cd backend
+          npm install
+          cd ../frontend
+          npm install
+          
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm run build
+          
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          port: ${{ secrets.SERVER_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 创建部署目录（如果不存在）
+            mkdir -p /var/www/mistake-book
+            
+            # 清理旧文件
+            rm -rf /var/www/mistake-book/*
+            
+            # 创建必要的目录
+            mkdir -p /var/www/mistake-book/backend
+            mkdir -p /var/www/mistake-book/frontend/dist
+            
+            # 复制新文件
+            cd /var/www/mistake-book
+            
+            # 克隆最新代码
+            git clone https://github.com/hyq19920217/mistake-book.git temp
+            
+            # 复制文件到正确的位置
+            cp -r temp/backend/* backend/
+            cp -r temp/frontend/dist/* frontend/dist/
+            
+            # 清理临时文件
+            rm -rf temp
+            
+            # 安装后端依赖
+            cd backend
+            npm install --production
+            
+            # 重启后端服务（使用 PM2）
+            pm2 restart mistake-book-server || pm2 start src/app.js --name mistake-book-server 
