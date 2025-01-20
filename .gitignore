@@ -32,3 +32,8 @@ Thumbs.db
 /uploads 
 # node_modules
 node_modules
+
+# SSH 密钥文件
+deploy_key
+deploy_key.pub
+deploy_key_full.txt
